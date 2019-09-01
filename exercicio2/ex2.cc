@@ -5,6 +5,7 @@
 using namespace std;
 
 struct Task{
+	int pid;
 	int instantOfStart;
 	int executionTime;
 	int priority;
@@ -32,9 +33,11 @@ void printTasks(vector<Task> tasks){
 
 
 void clearVector(vector<Task>& tasks){
+	int i = 0;
     for(auto& task: tasks) {
         task.elapsedTime = 0;
         task.lastEnd = task.instantOfStart;
+        task.pid = i++;
     }
 }
 
@@ -126,6 +129,37 @@ AlgorithmResult SJF(vector<Task> tasks){
     return result;
 }
 
+AlgorithmResult SRTF(vector<Task> tasks){
+    AlgorithmResult result{0, 0, 0, 0};
+    vector<Task> row;
+    int i=0;
+
+    for(long unsigned int idx = 0; i == 0 || row.size() > 0; i++){
+        while(tasks[idx].instantOfStart <= i && tasks.size() > idx)row.push_back(tasks[idx++]);
+        
+        auto lastFrontPid = row.front().pid;
+        if(row.front().executionTime - row.front().elapsedTime <= 0) {
+			result.averageExecutionTime += i - row.front().instantOfStart;
+			row.erase(row.begin());
+		}
+        
+        sort(row.begin(), row.end(), [](Task t1, Task t2){ return t1.executionTime-t1.elapsedTime < t2.executionTime-t2.elapsedTime; });
+        if(i != 0 && lastFrontPid != row.front().pid) {
+			for(auto& task: row) if(task.pid == lastFrontPid) task.lastEnd = i;
+			result.averageWaitTime += i - row.front().lastEnd;
+			result.contextSwitches++;
+		}
+		
+		row.front().elapsedTime++;
+    }
+    
+    result.averageWaitTime /= tasks.size();
+    result.averageExecutionTime /= tasks.size();
+    result.totalProcessingTime = i-1;
+    return result;
+}
+
+
 int main() {
 	int nTasks = 0;
 	cin >> nTasks;
@@ -142,4 +176,5 @@ int main() {
 	cout << FCFS(tasks) << endl;
 	cout << RR(tasks) << endl;
 	cout << SJF(tasks) << endl;
+	cout << SRTF(tasks) << endl;
 }
