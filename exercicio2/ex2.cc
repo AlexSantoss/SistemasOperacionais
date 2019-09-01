@@ -63,12 +63,9 @@ AlgorithmResult RR(vector<Task> tasks){
     vector<Task> row;
     int i=0;
 
-    //i = tempo;
-    //idx = index da lista de tasks
-    for(int idx = 0, quantum = 0; i == 0 || row.size() != 0; i++){
+    for(long unsigned int idx = 0, quantum = 0; i == 0 || row.size() != 0; i++){
 
-        //Adicionar tasks na fila
-        while(tasks[idx].instantOfStart == i) row.push_back(tasks[idx++]);
+        while(tasks[idx].instantOfStart == i && tasks.size() > idx) row.push_back(tasks[idx++]);
 
         if(row.front().elapsedTime == row.front().executionTime){
             row.front().lastEnd = i;
@@ -105,6 +102,30 @@ AlgorithmResult RR(vector<Task> tasks){
     return result;
 }
 
+AlgorithmResult SJF(vector<Task> tasks){
+    AlgorithmResult result{0, 0, 0, 0};
+    vector<Task> row;
+    int i=0;
+
+    for(long unsigned int idx = 0; i == 0 || row.size() != 0; i++){
+        while(tasks[idx].instantOfStart <= i && tasks.size() > idx) row.push_back(tasks[idx++]);
+        sort(row.begin(), row.end(), [](Task t1, Task t2){ return t1.executionTime < t2.executionTime; });
+        
+        result.averageWaitTime += i - row.front().lastEnd;
+        result.averageExecutionTime += row.front().executionTime + i - row.front().instantOfStart;
+        result.contextSwitches++;
+        i += row.front().executionTime - 1;
+
+        row.erase(row.begin());
+    }
+    
+    result.averageWaitTime /= tasks.size();
+    result.averageExecutionTime /= tasks.size();
+    result.totalProcessingTime = i;
+    result.contextSwitches--;
+    return result;
+}
+
 int main() {
 	int nTasks = 0;
 	cin >> nTasks;
@@ -116,8 +137,9 @@ int main() {
 	for(auto& task: tasks) cin >> task.priority;
 
     sort(tasks.begin(), tasks.end(), [](Task t1, Task t2){ return t1.instantOfStart < t2.instantOfStart; });
+    clearVector(tasks);
 
 	cout << FCFS(tasks) << endl;
-	clearVector(tasks);
 	cout << RR(tasks) << endl;
+	cout << SJF(tasks) << endl;
 }
