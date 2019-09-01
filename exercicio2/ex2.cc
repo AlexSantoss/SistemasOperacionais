@@ -159,6 +159,59 @@ AlgorithmResult SRTF(vector<Task> tasks){
     return result;
 }
 
+AlgorithmResult PRIOc(vector<Task> tasks){
+    AlgorithmResult result{0, 0, 0, 0};
+    vector<Task> row;
+    int i=0;
+
+    for(long unsigned int idx = 0; i == 0 || row.size() != 0; i++){
+        while(tasks[idx].instantOfStart <= i && tasks.size() > idx) row.push_back(tasks[idx++]);
+        sort(row.begin(), row.end(), [](Task t1, Task t2){ return t1.priority > t2.priority; });
+        
+        result.averageWaitTime += i - row.front().lastEnd;
+        result.averageExecutionTime += row.front().executionTime + i - row.front().instantOfStart;
+        result.contextSwitches++;
+        i += row.front().executionTime - 1;
+
+        row.erase(row.begin());
+    }
+    
+    result.averageWaitTime /= tasks.size();
+    result.averageExecutionTime /= tasks.size();
+    result.totalProcessingTime = i;
+    result.contextSwitches--;
+    return result;
+}
+
+AlgorithmResult PRIOp(vector<Task> tasks){
+    AlgorithmResult result{0, 0, 0, 0};
+    vector<Task> row;
+    int i=0;
+
+    for(long unsigned int idx = 0; i == 0 || row.size() > 0; i++){
+        while(tasks[idx].instantOfStart <= i && tasks.size() > idx)row.push_back(tasks[idx++]);
+        
+        auto lastFrontPid = row.front().pid;
+        if(row.front().executionTime - row.front().elapsedTime <= 0) {
+			result.averageExecutionTime += i - row.front().instantOfStart;
+			row.erase(row.begin());
+		}
+        
+        sort(row.begin(), row.end(), [](Task t1, Task t2){ return t1.priority > t2.priority; });
+        if(i != 0 && lastFrontPid != row.front().pid) {
+			for(auto& task: row) if(task.pid == lastFrontPid) task.lastEnd = i;
+			result.averageWaitTime += i - row.front().lastEnd;
+			result.contextSwitches++;
+		}
+		
+		row.front().elapsedTime++;
+    }
+    
+    result.averageWaitTime /= tasks.size();
+    result.averageExecutionTime /= tasks.size();
+    result.totalProcessingTime = i-1;
+    return result;
+}
 
 int main() {
 	int nTasks = 0;
@@ -177,4 +230,6 @@ int main() {
 	cout << RR(tasks) << endl;
 	cout << SJF(tasks) << endl;
 	cout << SRTF(tasks) << endl;
+	cout << PRIOc(tasks) << endl;
+	cout << PRIOp(tasks) << endl;
 }
