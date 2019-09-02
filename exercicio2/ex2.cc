@@ -27,12 +27,26 @@ std::ostream& operator << (std::ostream &o, const AlgorithmResult a){
 
 void printTasks(vector<Task> tasks){
 	for(auto task: tasks) {
-		cout << task.pid << " " << task.aging << " " << task.priority << " | ";
+		cout << task.pid << " " << task.aging << " " << task.priority << " " << task.lastEnd << " | ";
 	}
 	cout << endl;
 }
 
 void printResults(vector<AlgorithmResult> results){
+	cout << "\t\t\t\tFCFS\tRR\tSJF\tSRTF\tPRIOc\tPRIOp\tPRIOd" << endl;
+	
+	cout << "Tempo médio de execução\t\t";
+	for(auto result: results) cout << result.averageExecutionTime << "\t";
+	
+	cout << endl << "Tempo médio de espera\t\t";
+	for(auto result: results) cout << result.averageWaitTime << "\t";
+	
+	cout << endl << "Número de trocas de contexto\t";
+	for(auto result: results) cout << result.contextSwitches << "\t";
+	
+	cout << endl << "Tempo total de processamento\t";
+	for(auto result: results) cout << result.totalProcessingTime << "\t";
+	cout << endl;
 	
 }
 
@@ -90,7 +104,7 @@ AlgorithmResult RR(vector<Task> tasks){
         if(quantum == 2) {
 			row.push_back(row.front());
 			
-			row.front().lastEnd = i;
+			row.back().lastEnd = i;
             row.erase(row.begin());
             
             quantum = 0;
@@ -271,4 +285,5 @@ int main() {
     clearVector(tasks);
 	
 	vector<AlgorithmResult> results = {FCFS(tasks), RR(tasks), SJF(tasks), SRTF(tasks), PRIOc(tasks), PRIOp(tasks), PRIOd(tasks)};
+	printResults(results);
 }
