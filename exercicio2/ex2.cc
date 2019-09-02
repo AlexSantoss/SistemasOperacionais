@@ -11,6 +11,7 @@ struct Task{
 	int priority;
 	int elapsedTime;
 	int lastEnd;
+	int aging;
 };
 
 struct AlgorithmResult{
@@ -26,18 +27,22 @@ std::ostream& operator << (std::ostream &o, const AlgorithmResult a){
 
 void printTasks(vector<Task> tasks){
 	for(auto task: tasks) {
-		cout << task.instantOfStart << " " << task.executionTime << " " << task.elapsedTime << " " << task.lastEnd << " | ";
+		cout << task.pid << " " << task.aging << " " << task.priority << " | ";
 	}
 	cout << endl;
 }
 
+void printResults(vector<AlgorithmResult> results){
+	
+}
 
 void clearVector(vector<Task>& tasks){
-	int i = 0;
+	int i = 1;
     for(auto& task: tasks) {
         task.elapsedTime = 0;
         task.lastEnd = task.instantOfStart;
         task.pid = i++;
+        task.aging = task.priority;
     }
 }
 
@@ -213,6 +218,45 @@ AlgorithmResult PRIOp(vector<Task> tasks){
     return result;
 }
 
+//nesse, percebi uma diferenca com o exemplo do texto.
+//a conta no texto parece estar sendo feita errada
+AlgorithmResult PRIOd(vector<Task> tasks){
+    AlgorithmResult result{0, 0, 0, 0};
+    vector<Task> row;
+    int i=0;
+
+    for(long unsigned int idx = 0; i == 0 || row.size() > 0; i++){
+        while(tasks[idx].instantOfStart <= i && tasks.size() > idx)row.push_back(tasks[idx++]);
+        
+        auto lastFrontPid = row.front().pid;
+        if(row.front().executionTime - row.front().elapsedTime <= 0) {
+			for(auto aux = row.begin()+1; aux != row.end(); aux++) (*aux).aging++;
+			
+			result.averageExecutionTime += i - row.front().instantOfStart;
+			row.erase(row.begin());
+		}
+        
+        sort(row.begin(), row.end(), [](Task t1, Task t2){
+			if(t1.aging == t2.aging) return t1.priority > t2.priority;
+			else return t1.aging > t2.aging;
+		});
+        
+        if(lastFrontPid != row.front().pid) {
+			for(auto& task: row) if(task.pid == lastFrontPid) task.lastEnd = i;
+			result.averageWaitTime += i - row.front().lastEnd;
+			result.contextSwitches++;
+			
+			row.front().aging = row.front().priority;
+		}
+		row.front().elapsedTime++;
+    }
+    
+    result.averageWaitTime /= tasks.size();
+    result.averageExecutionTime /= tasks.size();
+    result.totalProcessingTime = i-1;
+    return result;
+}
+
 int main() {
 	int nTasks = 0;
 	cin >> nTasks;
@@ -225,11 +269,6 @@ int main() {
 
     sort(tasks.begin(), tasks.end(), [](Task t1, Task t2){ return t1.instantOfStart < t2.instantOfStart; });
     clearVector(tasks);
-
-	cout << FCFS(tasks) << endl;
-	cout << RR(tasks) << endl;
-	cout << SJF(tasks) << endl;
-	cout << SRTF(tasks) << endl;
-	cout << PRIOc(tasks) << endl;
-	cout << PRIOp(tasks) << endl;
+	
+	vector<AlgorithmResult> results = {FCFS(tasks), RR(tasks), SJF(tasks), SRTF(tasks), PRIOc(tasks), PRIOp(tasks), PRIOd(tasks)};
 }
