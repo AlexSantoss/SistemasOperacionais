@@ -10,4 +10,7 @@ simpleTests: test1 test2 test3
 
 complexTests: compile teste4.txt
 	./simula-vm 64 < teste4.txt
+	./simula-vm 256 < teste4.txt
+	./simula-vm 1024 < teste4.txt
+	./simula-vm 4096 < teste4.txt
 
