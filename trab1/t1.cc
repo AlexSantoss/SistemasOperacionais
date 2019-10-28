@@ -8,27 +8,28 @@ struct node{
   int page; 
 };
 
-inline vector<node>::iterator first_equals(const vector<node>::iterator &begin,const vector<node>::iterator &end,const node other){
-	auto const static isEqual = [&other](auto aux){return other.page == aux.page;};
+vector<node>::iterator first_equals(const vector<node>::iterator &begin, const vector<node>::iterator &end, const node other){
+	auto const isEqual = [&other](auto aux){return other.page == aux.page;};
 	return find_if(begin, end, isEqual);
 }
 
-inline void replace_equals(const vector<node>::iterator &begin,const vector<node>::iterator &end, const node other, const node new_value){
-	auto const static isEqual = [&other](auto aux){return other.page == aux.page;};
+ void replace_equals(const vector<node>::iterator &begin, const vector<node>::iterator &end, const node other, const node new_value){
+	auto const isEqual = [&other](auto aux){return other.page == aux.page;};
 	replace_if(begin, end, isEqual, new_value);
 }
 
-int opt_algorithm(const int &nPages,vector<node> &reference){
+int opt_algorithm(const int &nPages, vector<node> &reference){
 	int fault=0;
+	node lastReferenced;
 	
 	vector<node> frames;
 	frames.reserve(nPages);
 	
-	node lastReferenced;
 	vector<node>::iterator proxOcurrence;
 	
-	for(auto access = reference.begin(); access != reference.end(); ++access){	
+	for(auto access = reference.begin(); access != reference.end(); ++access){
 		if(first_equals(frames.begin(), frames.end(), *access) == frames.end()){
+			
 			if(frames.size() < nPages)
 				frames.push_back(*access);
 			else {
@@ -49,12 +50,61 @@ int opt_algorithm(const int &nPages,vector<node> &reference){
 	return fault;
 }
 
-int main(int argc, const char *argv[]){
-  vector<node> reference;
-  int tempPage, nPages = atoi(argv[1]), instant=1;
-  while(cin >> tempPage)
-	reference.push_back( node{instant++, tempPage} );
+int fifo_algorithm(const int &nPages,const vector<node> &reference){
+	int fault=0;
+	node older;
 	
-  opt_algorithm(nPages, reference);
-  opt_algorithm(nPages, reference);
+	vector<node> frames;
+	frames.reserve(nPages);
+	
+	for(auto access = reference.begin(); access != reference.end(); ++access){	
+		if(first_equals(frames.begin(), frames.end(), *access) == frames.end()){
+			if(frames.size() < nPages)
+				frames.push_back(*access);
+			else {
+				older = *(reference.end()-1);
+				for(auto frame: frames){
+					if(older.instant > frame.instant) older = frame;
+				}
+				replace_equals(frames.begin(), frames.end(), older, *access);
+			}
+			fault++;
+		}
+	}
+	return fault;
+}
+
+int lru_algorithm(const int &nPages,const vector<node> &reference){
+	int fault=0;
+	node older;
+	
+	vector<node> frames;
+	frames.reserve(nPages);
+	
+	for(auto access = reference.begin(); access != reference.end(); ++access){
+		auto page = first_equals(frames.begin(), frames.end(), *access);
+		if(page == frames.end()){
+			if(frames.size() < nPages)
+				frames.push_back(*access);
+			else {
+				older = *(reference.end()-1);
+				for(auto frame: frames){
+					if(older.instant > frame.instant) older = frame;
+				}
+				replace_equals(frames.begin(), frames.end(), older, *access);
+			}
+			fault++;
+		}else page->instant = access->instant;
+	}
+	return fault;
+}
+
+int main(int argc, const char *argv[]){
+	vector<node> reference;
+	int tempPage, nPages = atoi(argv[1]), instant=1;
+	while(cin >> tempPage)
+		reference.push_back( node{instant++, tempPage} );
+
+	printf ("%5d quadros, %7ld refs: FIFO: %5d PFs, LRU: %5d PFs, OPT: %5d PFs\n",
+		nPages, reference.size(), fifo_algorithm(nPages, reference), lru_algorithm(nPages, reference), opt_algorithm(nPages, reference)) ;
 }
