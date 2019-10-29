@@ -1,6 +1,6 @@
 # Trabalho 1 - Simular algoritmos de substituição de páginas
 
-###Para Executar
+### Para Executar
 No terminal:
 ```
 make compile
@@ -8,7 +8,7 @@ make compile
 ```
 Onde n = numero de quadros e input = arquivo de entrada
 
-###Para usar os testes prontos
+### Para usar os testes prontos
 No terminal:
 ```
 make testX
